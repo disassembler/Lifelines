@@ -1,0 +1,114 @@
+.TH llines 1 "2007 Oct" "Lifelines 3.0.62"
+.SH NAME
+llines \- LifeLines genealogy program
+.SH SYNOPSIS
+.BI "llines [" OPTION ]... 
+.br
+.BI "llines [" OPTION ]... Database
+.SH DESCRIPTION
+\fIllines\fR invokes the LifeLines genealogy program.
+.PP
+For up to date documentation please refer to the Documentation 
+section of this man page.
+.PP
+LifeLines is a program to manipulate genealogical information in
+lineage-linked GEDCOM format. It has a curses interface, and a
+built-in interpreter for its own genealogical report language.
+.SH OPTIONS
+The following options are some of the options available for \fIllines\fR.
+.TP
+.BI \-C
+Specify configuration file location.
+.TP
+.BI \-F
+Finnish option (only available if compiled with Finnish flag)
+.TP
+.BI \-I
+Specify a user property (e.g. -ILLEDITOR=gvim)
+.TP
+.BI \-a
+Log dynamic memory operation (for debugging)
+.TP
+.BI \-c
+Supply cache values (eg, -ci400,4000f400,4000 sets direct indi & fam 
+caches to 400, and indirect indi & fam caches to 4000)
+.TP
+.BI \-d
+Developmental/debug mode (signals are not caught)
+.TP
+.BI \-f
+Force open a database (only for use if reader/writer count is wrong)
+.TP
+.BI \-i
+Open database with immutable access (no protection against other 
+access -- for use on read-only media)
+.TP
+.BI \-k
+Always show key values (normally key is not shown if a REFN is shown)
+.TP
+.BI \-l
+Lock (-ly) or unlock (-ln) a database for use with read only media
+(access to a locked database is treated as immutable)
+.TP
+.BI \-n
+Do not use traditional family rules
+.TP
+.BI \-o
+Specify program output filename (eg, -o/tmp/mytests)
+.TP
+.BI \-r
+Open database with read-only access (protect against other writer access)
+.TP
+.BI \-u \fICOLS\fP,\fIROWS\fR
+Specify window size (eg, -u120,34 specifies 120 columns by 34 rows)
+.TP
+.BI \-w
+Open database with writeable access (protecte against other reader
+or writer access)
+.TP
+.BI \-x
+Execute a single lifelines report program directly
+.TP
+.BI \-z
+Use normal ASCII characters for drawing lines in user
+interface rather than the vt100 special characters
+.TP
+.BI \-?
+Display options summary, (on UNIX or Linux use the \-h option)
+.PP
+\fIllexec\fR is a version of \fIllines\fR without the user interface for
+non-interactive processing of report programs. (Typically used with the -x
+option.)
+.PP
+\fIdbverify\fR is a utility program to verify Lifelines databases.
+For information about options, run \fIdbverify\fR with the \-h option.
+.SH FILES
+.I /etc/lifelines.conf
+.br
+.I ~/.linesrc
+.br
+.I ~/lines.cfg
+.br
+.I ./linesrc
+.br
+.I ./lines.cfg
+.RS
+Possible locations for Lifelines configuration file
+Lifelines looks for a configuration file for various settings. See section
+\fISystem And User Properties\fR in the userguide for details.
+.RE
+.SH DOCUMENTATION
+The LifeLines documentation should be installed as part of the installation,
+and may also be viewed at the project site:
+http://lifelines.sourceforge.net.
+Look for ll-userguide and ll-reportmanual (with appropriate extensions for
+text, html and pdf formats).
+The normal installation process includes a large number of sample report
+programs that you can customize to suit your needs.  In the directory
+containing these reports you should find a file named index.html which gives a
+very brief summary of each report.
+.SH "SEE ALSO"
+.BR llexec (1),
+.BR dbverify (1),
+.BR btedit (1)
+

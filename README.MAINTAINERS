@@ -1,0 +1,97 @@
+These instructions are for building a new lifelines 
+release, in your cvs working directory, and actually
+releasing it.
+
+Fetch latest cvs if desired, eg 
+  $ cvs -z3 up -d
+
+Edit the version number, setting it to the new release:
+(Running, eg, "cd build; sh setversions.sh 3.0.19; cd .." does this)
+(NB: setversions.sh requires bash3)
+  NEWS
+  INSTALL
+  README
+  configure.ac
+  build/rpm/lifelines.spec
+  src/hdrs/version.h
+  build/msvc6/btedit/btedit.rc (4 occurrences)
+  build/msvc6/dbverify/dbVerify.rc (4 occurrences)
+  build/msvc6/llexec/llexec.rc (4 occurrences)
+  build/msvc6/llines/llines.rc (4 occurrences)
+  docs/ll-devguide.xml (2 occurrences)
+  docs/ll-reportmanual.xml (2 occurrences)
+  docs/ll-userguide.xml (2 occurrences)
+  docs/llines.1 (& year & month as well)
+
+Run autotools:
+  $ sh autogen.sh
+
+Note: There are several reports which do not build
+correctly in UTF-8 locale. Therefore, if you use
+a UTF-8 locale, do something like so:
+export LANG=en_US.ISO-8859-1
+
+Build local copy in ./bld subdirectory:
+  $ rm -rf bld
+  $ mkdir bld
+  $ cd bld
+  $ ../configure
+  $ make
+
+Update master message catalog template (for i18n):
+  $ mv ../po/lifelines.pot ../po/lifelines.old.pot
+  $ cd po
+  $ make lifelines.pot
+  $ cd ..
+
+Build distribution tarball:
+  $ make dist
+  $ cd ..
+
+Add an entry mentioning the new version in the
+  ChangeLog
+
+Commit changes (new version number, new message catalogs):
+  $ cvs -z3 ci
+
+Announce new version to Free Translation Project.
+Per: http://www.iro.umontreal.ca/translation/HTML/maintainers.html
+ <Merely send the URL of a packaged distribution to
+  translation@iro.umontreal.ca. Use the string
+  "DOMAIN-VERSION.pot" somewhere in the subject line
+  of your invoice. Beware that a POT file may only
+  be processed once by the Translation Project.>
+Free Translation Project page for lifelines:
+  http://www.iro.umontreal.ca/translation/registry.cgi?domain=lifelines
+
+Build any other files (eg, other tarball formats,
+MS-Windows binary packages, rpm packages).
+
+rpm:  See README.MAINTAINERS.rpm
+
+debian: lifelines is a supported debian package
+         and has a debian maintainer (q.v.)
+
+MS-Windows: See README.MAINTAINERS.win32
+
+
+Go to lifelines admin page, and create a new
+beta release. Paste in top part of ./NEWS file
+for ChangeLog entry, and copy & paste release
+notes from previous beta release, updating md5
+signatures to those of new release files.
+
+Upload the release files (tarball etc.) to
+uploads.sourceforge.net. From the release page
+(above, opened from project admin), refresh
+and attach the release files, and set properties
+appropriately (can look at previous releases to
+see how to set them).
+
+Tag the cvs source via (for example, for version 3.0.25)
+  cvs tag v3_0_25
+
+Send an announcement to the LINES-L mailing list
+ (send to user LINES-L at domain LISTSERV.NODAK.EDU).
+
+

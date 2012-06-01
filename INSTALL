@@ -1,0 +1,220 @@
+LifeLines Source Release, Version 3.0.62
+http://lifelines.sourceforge.net
+-------------------------------------------------------------------------
+
+********************************
+Contents:
+1. General (UNIX) installation
+ 1a) Dependencies
+2. Platform specific notes
+ 2a) Platforms supported out-of-the-box
+ 2b) Microsoft Windows
+ 2c) cygwin
+ 2d) rpm packages
+ 2e) Debian binaries
+ 2f) gcc 2.7.2.1
+ 2g) curses
+ 2h) Mac OS X
+********************************
+
+
+
+******************************
+1. General (UNIX) installation
+******************************
+
+
+This is the source distribution of the LifeLines system, a genealogy
+software system.
+
+(If you are building from cvs sources, you will not have a configure
+script, and you should be reading the README.DEVELOPERS instructions.)
+
+LifeLines should compile correctly using GNU gcc or any native C compiler.
+It also will build using the Cygnus tools on Windows (but see note in the
+platform notes section below).
+
+To build and install LifeLines, do the following:
+
+	./configure (if that does't work, try 'sh ./configure')
+	make
+	make install
+
+If you do not have gettext & iconv installed, you may need to use
+	./configure --disable-nls
+
+This will generate Makefiles suitable for your platform and then build
+and install the LifeLines programs.  You will end up with the following
+executables (installed in various places, depending on your platform):
+
+llines   -- main LifeLines system program
+btedit   -- general purpose btree edit program
+dbverify -- checks a LifeLines database for problems
+
+llines is the main LifeLines program.
+
+dverify can be used to verify the correctness of a LifeLines database.
+This is handy if you're storing databases on floppies, or just for
+peace of mind.
+
+btedit is a administration tool used for unmangling mangled databases, 
+and is extremely powerful.  You should only use this program under the
+expert guidance of a LifeLines developer.
+
+
+docs:
+The make process will attempt to generate html, pdf, and text 
+documentation from the xml source files. If the jw tools are
+not found, errors will display, but the make will continue. 
+Pregenerated versions of the documentation are included, in
+html, pdf, and text formats, so it is not necessary to have
+these tools installed. It is simply beneficial to ensure that
+they are absolutely up-to-date.
+
+******************************
+1a) Dependencies
+******************************
+lifelines has a number of dependencies and they vary depending on
+how you build lifelines. (Avoid gcc version 2.7.2.1)
+1. General dependencies
+   ncurses
+2. Building from CVS
+   automake
+   autoconf
+   bison
+3. Document Generation - see above about docs.
+   Regeneration of the docs requires tools to convert from xml to html, pdf,
+   and text.  Currently the tools being used are 
+   docbook
+   docbook-utils
+   lynx
+4. Multiple Language support - processed files are checked into cvs, but
+   to rebuild the language files:
+   gettext
+   iconv
+
+Some notes on our document generation.  The makefiles currently are setup to 
+use the  "docbook-utils" package -- part of the "docbook-tools" package at RedHat.
+More tools are becoming available to convert xml to html and/or pdf formats.
+On FreeBSD systems it is possible to use Xerces and Xalan -- a XML parser 
+and XSLT transformer, respectively, from the Apache XML project:
+http://xml.apache.org/
+    $ xalan -o ll-userguide.html ll-userguide.xml .../docbook-xsl/html/docbook.xsl
+    $ htmldoc -f ll-userguide.pdf ll-userguide.html
+DarwinPorts has xercesc, xalanc, docbook-xml, and docbook-xsl.
+
+**************************
+2. Platform specific notes
+**************************
+
+*********************
+2a) Platforms supported out-of-the-box
+*********************
+
+Many unix systems should be supported out-of-the-box with the tarball
+(lifelines-x.y.z.tar.gz) distribution.
+
+Reported successes include:
+ lifelines-3.0.46:
+   Fedora Core 3
+   FreeBSD 4.11-STABLE
+   OS X 10.3.9
+ 
+
+*********************
+2b) Microsoft Windows
+*********************
+
+For installing the binary distribution on MS-Windows, refer to the
+file Install.LifeLines.Windows.txt included in that distribution
+(& also included in the docs subdirectory of the source
+distributions).
+
+For compiling from source on MS-Windows, if using cygwin, refer to
+the General (UNIX) instruction above (and see also the cygwin note
+below). If using MS Visual C++, you may use the project files
+included in the subdirectories beneath /win32/msvc6 (which are
+currently used by Perry to generate the binaries in the MS-Windows
+binary distribution).
+
+
+**********
+2c) Cygwin
+**********
+
+Cygwin is a UNIX environment for MS-Windows. 
+    http://sources.redhat.com/cygwin
+The lines around the boxes in the lifelines curses GUI use OEM
+box characters, and so only display correctly with this setting:
+    export CYGWIN=codepage:oem
+This of course affects the console code page. If all your data is
+ASCII, this solution may work fine for you. Otherwise, you may
+invoke llines with the -z switch to suppress curses graphics, and
+use primitive ASCII graphics. This is not particularly attractive,
+but is usable. Suggestions are welcome.
+Note that the -z commandline switch was added after the 3.0.9 
+release.
+
+To compile libiconv on cygwin, I had to compile it statically, eg,
+(in libiconv directory)
+   ./configure --enable-static --disable-shared
+
+
+***************
+2d) rpm packages
+***************
+
+The source distribution includes the spec file to create rpm
+packages.
+
+***************
+2e) Debian packages
+***************
+
+Christian Perrier maintains a Debian port of linux.
+See:
+http://packages.debian.org/cgi-bin/search_packages.pl?searchon=names&version=all&exact=1&keywords=lifelines
+
+
+***************
+2f) gcc 2.7.2.1
+***************
+
+gcc 2.7.2.1 does not understand -Wreturn-type, so this
+must be removed from configure and from CFLAGS in
+interp/Makefile* files. This must be done before configuring,
+because it causes configure tests to fail spuriously.
+(Jan, 2002)
+
+
+**********
+2g) curses
+**********
+
+Compiling with curses (lacking ncurses) on a BSDI 3.1 box,
+I had to add
+    -ltermcap
+to the LIBS line in liflines/Makefile. (The symptom was
+"unknown symbol... _tputs.)
+However, I wound up core dumping at run-time, so I don't know
+what is going on. 
+(Perry, Jan, 2002)
+
+
+************
+2h) Mac OS X
+************
+
+Please see the following page about LifeLines on Mac OS X:
+    http://homepage.mac.com/shrubbery/LifeLines
+(which is also available via the Apple downloads site and Stepwise.)
+This page offers both precompiled binaries and instructions for
+compilation.
+NB: Because the gnu tests for platform didn't recognize Darwin,
+on older versions, perhaps before 10.2.x, it was necessary to pass
+an argument to configure, eg,
+   ./configure ppc
+There is no specific code needed for Darwin; this is just to avoid
+the macros getting angry at the unknown output from "uname -a".
+
+

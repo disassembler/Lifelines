@@ -1,0 +1,25 @@
+LifeLines architecture compatibility library
+============================================
+
+This library contains replacement functions for standard functions
+(POSIX, ANSI C, BSD, etc), to be used on platforms missing these
+functions.
+
+When using these functions, include <arch.h>.
+
+Currently, the following functions are implemented:
+
+int sleep(int)
+
+  POSIX, implemented for Win32.
+
+int alphasort(const struct dirent **, const struct dirent **);
+int scandir(const char *, struct dirent ***, int (*)(const struct dirent *),
+            int (*)(const struct dirent **, const struct dirent **));
+
+  BSD, implemented for Unix and Win32.
+
+int getopt(int argc, char **argv, char *optstring)
+
+  POSIX, implemented for Win32.
+

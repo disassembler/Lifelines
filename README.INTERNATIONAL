@@ -1,0 +1,83 @@
+Lifelines was gettextized in Feb of 2002.
+lifelines-3.0.12 was submitted to Free Translation Project on May 12, 2002
+
+Included versions are:
+  sv: Swedish (Thanks to Jens Arvidsson)
+  de: German (Thanks to Carl Becker)
+
+Versions under private development:
+  fr: French
+
+If you would like to volunteer to help with a new or existing
+translation, please contact the Free Translation Project
+     http://www.iro.montreal.ca/contrib/po/HTML
+except for the de & fr translations, for which send email to
+the long-running lifelines mailing list, LINES-L, which is
+explained at:
+     http://www.rootsweb.com/~nozell/lines-l
+
+
+Issues for translators:
+ gettext
+  If you are not familiar with gettext, it would be beneficial to
+  look not only at the ABOUT-NLS file (in the root of lifelines), but
+  also the gettext manual, which may be seen at
+     http://www.gnu.org/manual/gettext/index.html
+
+ Free Translation Project
+  The Translation Project is a collaborative effort to translate free
+  software packages:
+     http://www.iro.montreal.ca/contrib/po/HTML
+
+ Menus.
+  The large menus (main menu, utility menu, etc) still have hardcoded
+  letters, so that "u" always invokes the utility menu from the main
+  menu, and this cannot be changed at present.
+  The list browse screen also has fixed menu letters.
+  Widths.
+   The main menu has room for 70 characters after the spaces of each item
+   (eg, after "u  " you may use 70 characters).
+   Submenus must be smaller.
+
+  The small menus at the bottom of browse screens (person browse,
+  family browse, tandem browses, other browse, but not list browse) 
+  draw their menu assignment letters from the actual text, so that the
+  the letter codes may be localized. Note that you must be familiar with
+  the lifelines menu screens to localize these letters; if not, simply
+  leave the leading letter codes as they are, and localize the subsequent
+  explanatory test. Eg, for "e  Edit top person", leave the leading e
+  as it is, unless you have worked out an entire set of localized letters
+  for this menu (this particular menu item is used in both the tandem
+  person menu and the tandem family menu).
+  The column widths of these flexible menu items are also figured
+  dynamically from the width of the widest menu item.
+  NB: These texts are all drawn from menuitem.c, whereas the fixed menu
+  texts are all drawn from messages.c.
+
+ Months:
+  Month short & long names are explicitly in the translations, rather
+  than being drawn from strftime, because the package is used on
+  MSWin^h^h^h^h^h platforms with poor libc support.
+
+ May:
+  The month of May has the same short & long form in English, so the
+  short form is marked as "may**", so that it may be localized. Do not
+  include asterisks in your localized version.
+
+ French Republic months:
+  The names of the French Republic months (eg, Vendemiaire) should
+  probably stay in French.
+
+ printf-style format specifiers (%s and %d):
+  The order of the printf specifiers must be preserved. The glibc extensions
+  to allow reordering these cannot be used, because this will fail on systems
+  without glibc (and if a %s and a %d are reversed, it will crash). For 
+  example,
+    (%s: %d spouse(s), %d child(ren))
+  All translations must have the %s first, then the %d for spouses, then the
+  one for children.
+  If this is a problem in a particular case, please post a message to the
+  LINES-L list. 
+  If the specifiers are %1 and %2, then they may be moved around in order.
+  (These are ones handled specially to allow reordering.)
+

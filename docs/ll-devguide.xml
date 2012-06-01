@@ -1,0 +1,1001 @@
+<?xml version='1.0' encoding='iso-8859-1'?>
+
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+                 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+[<!ENTITY llversion '3.0.62'>]>
+
+<!--
+Outline for developer's guide to lifelines code.
+This is only an outline, not a parseable XML file.
+
+2005-02-12, Perry Rapp
+
+
+* stdlib directory
+The stdlib directory contains various utility functions not specifically
+related to LifeLines, GEDCOM, or even genealogy.
+
+  * string functions
+  There has built up, over time, quite an assortment of string functions,
+  split currently between mystring.c and stdstrng.c (and a few macros in
+  standard.h).
+
+    * llstrncpy, llstrncat
+    These are simple wrappers around the C RTL (run time library) functions.
+    The ANSI versions do not zero-terminate on overflow, which is greatly
+    inconvenient, os the wrapper versions do so. Also, the wrapper versions
+    are UTF-8 aware (they backtrack on overflow, to avoid leaving part of
+    a UTF-8 multibyte sequence at the end).
+
+    * llstrapp (string append)
+    This family of functions is one (thin) layer higher than llstrncpy,
+    providing an interface wherein the caller specified the buffer's start
+    and entire size. That is,
+      llstrncat(buffer, " more stuff", sizeof(buffer)-strlen(buffer));
+    may be replaced by
+      llstrapp(buffer, sizeof(buffer), " more stuff");
+    There are also varargs versions, so that
+      snprintf(buffer+strlen(buffer), sizeof(buffer)-strlen(buffer), ...
+    may be replaced by
+      llstrappf(buffer, sizeof(buffer), ...
+
+    * appendstr
+    This is a family of functions similar in purpose to the strapp 
+    family, but which uses an additional level of indirection, advancing
+    pointers and decrementing counts. 
+
+      * NOTE: FUTURE DIRECTIONS
+      I put these in, and I would like to take them out, as I find them
+      less intuitive than the strapp family, and more bug-prone. They are
+      slightly faster, but I don't think it is worth it. -Perry. 
+
+    * char functions
+    There are character classification functions, which have handling
+    particular to Latin-1 and to Finnish (if the Finnish compilation option
+    was set). 
+
+      * NOTE: FUTURE DIRECTIONS
+      It would be very nice to see wchar-based functions, which handle
+      unicode, replace these, and then we might be able to jettison the
+      Latin-1 & Finnish specific character code.
+
+    * string allocation functions
+    TODO: (strsave, strfree, strupdate, strconcat, free_array_strings)
+
+    * string conversion functions
+    TODO: (isnumeric, lower, upper, capitalize, titlecase)
+
+    * string equality functions
+    TODO: (eqstr, eqstr_ex, nestr, cmpstr)
+
+    * string comparison function
+    TODO: (cmpstrloc)
+
+    * string whitespace functions
+    TODO: (trim, striptrail, striplead, allwhite, chomp)
+
+    * string UTF-8 functions
+    TODO: (utf8len, find_prev_char)
+
+    * printpic functions
+    TODO: (sprintpic0,1,2,3)
+
+* gedlib directory
+This directory is a collection of routines for GEDCOM and for its use in
+a LifeLines btree database.
+
+  * keytonod.c
+  This module implements the cache of node trees. This cache
+  operates on top of the back-end database, and nztop() uses
+  this cache to access the node tree of a RECORD.
+
+  * names
+  This module implements indexing names.
+  TODO: Explain soundex indexing.
+
+  * refns
+  This module implements indexing references (REFNs).
+  TOD: Explain two character index.
+
+  * xreffile
+  This module stores lists of deleted record numbers for each type.
+  When a record is deleted, its number is added to the appropriate
+  deleted list in xreffile. When a record is added, first the
+  appropriate deleted list in xreffile is checked for a free record
+  number.
+
+  * messages
+  Traditionally all translatable strings have been stored in this file.
+  This is not necessary with the current gettext scheme, but it would
+  perhaps be helpful if a resource based scheme were adapted in the
+  future.
+
+    * FUTURE DIRECTIONS
+    When/If GUI versions are incorporated into the same codebase, how to
+    handle translate strings shared and not shared between versions needs
+    to be worked out.
+
+  * translation tables (charmaps.c & translat.c)
+  The implementation of codeset translation is stored here (not to be 
+  confused with language translation for the user interface, called
+  localization, and not associated with these files). Both custom
+  translation tables and delegation to the iconv codeset conversion 
+  library are done here.
+
+    * TRANTABLE
+    A TRANTABLE is a single, custom-translation table in memory.
+    It may have been loaded from the tt subdirectory (which holds
+    custom tables for standard conversions, for systems lacking iconv)
+    or it may have been loaded from a resident-in-database legacy
+    table.
+
+    * XLAT
+    An XLAT is a full translation chain, which may use TRANTABLES and
+    iconv steps in series. For example, an XLAT might convert from
+    UTF-8 to ISO-8859-1 but also html'ize the text, using two steps,
+    firstly a TRANTABLE loaded from UTF-8__html.tt, and secondly
+    using iconv.
+
+    * XLSTEP
+    An XLSTEP represents one step in an XLAT chain.
+
+    * DYNTT
+    A DYNTT is a wrapper for a TRANTABLE loaded from the tt subdir.
+
+  * indiseq
+  The indiseq type is implemented here, a list of records (which no longer
+  need all be persons).
+
+  * brwslist
+  Named browse lists are implemented here (temporary record lists named by
+  user during this session).
+
+* interp directory
+The lifelines reporting language parser and interpreter are stored here.
+A custom lexical analyzer is in lex.c, and a yacc parser generator is
+in yacc.y. 
+
+The main interpreter is called with a list of files to parse, and some
+options. In actuality, I don't think more than one file is ever passed
+to the main entry point. If no file is passed, the routine will prompt
+(and here is where the user may choose a report from a list). But a
+report may be passed in, if one was specified with commandline argument
+to llines or llexec.
+
+The report file is parsed, and as it is parsed, any included reports 
+are added to the list to be parsed (unless already on the list,
+so circular references are not a problem).
+
+require statements are handled at parse time. The handler puts the
+requested version into the file property table (stored inside the
+pointer in the filetab entry for the file; filetab entries are
+indexed by full path of report). Later, just after parse completes
+for that file (in the main parsing loop in the main interpreter 
+function), require conditions are tested in check_rpt_requires(...).
+
+  * pvalues
+  All variable values in report language interpretation are stored in a
+  union type called pvalue.
+
+  * symtab
+  Symbol tables are a thin wrapper around the table type provided by
+  stdlib, specialized to hold pvalues.
+
+  * date
+  A fairly complete GEDCOM date parser is also located here. It actually
+  includes both a date parser, and a date formatter (which generates the
+  thousands of possible lifelines date formats).
+
+    * FUTURE DIRECTIONS
+    If a date type were added to the report language, it would be possible
+    to distinguish fully-parsed dates in the report language (so invalid or
+    illegal dates could be flagged & handled separately in a report). The
+    date module already implements a date type internally, and it is
+    exposed to the rest of the program (gdate & gdate_val, which correspond
+    to GEDCOM date types), but not to the report language.
+
+* liflines directory
+TODO:
+
+  * screen
+  The screen module contains most of the curses drawing code.
+
+    * DYNMENU
+    Each menu that is resizable and pageable, such as the menu at the bottom
+    of the person browse screen, has a DYNMENU structure, which contains all of
+    its menuitem strings and hotkeys (both English and localized to current
+    language), and also information about it size, and cursor point.
+
+    * UIWINDOW
+    Each actual curses window is inside a UIWINDOW, which is a structure that
+    holds our supplementary information for the window, such as its cursor point,
+    its parent and child in the (ui)window stack.
+
+    * cursor point
+    Note that both DYNMEMU and UIWINDOW structures have a cursor point. This is
+    because the cursor point is within the dynamic menu when it exists, but on
+    popup screens with no dynamic menu (such as full scan menu, or the partial
+    scan menu) the cursor point is held in the UIWINDOW itself. Further, the
+    full screen main menu is a special case, having neither DYNMENU nor UIWINDOW
+    of its own (it shares its UIWINDOW and its cursor window with all the
+    full screen browse screens), so its cursor point is hardcoded in 
+    place_cursor_main.
+
+-->
+
+
+
+  <book id="docbook">
+
+  <bookinfo>
+
+
+<!--
+
+    this is ll-devguide.xml
+
+    To use this file with SGML software, replace the text above
+    this comments section with the following:
+
+_________________________________________________________
+
+<!DOCTYPE BOOK PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+	<!entity llversion	"3.0.52">
+]>	
+	
+<book id="docbook">
+  <?dbhtml filename="ll-doc.htm">
+  <bookinfo>
+_________________________________________________________
+
+
+                                                       -->
+<!-- ================================================= -->
+
+    <title>
+
+<application>LifeLines</application> Developer Documentation
+</title>
+
+    <authorgroup>
+      <author>
+      <firstname>Perry</firstname><surname>Rapp </surname>
+      </author>
+    </authorgroup>
+
+    <subtitle><application>LifeLines</application> Version &llversion;</subtitle>
+  </bookinfo>
+
+
+
+    <chapter><title>
+
+Introduction to Lifelines Developers Manual
+
+</title>
+
+
+<para>
+
+     <application>LifeLines</application> source code is divided into
+	 several functional subdirectories, which will be discussed 
+	 individually below. They are chained together by an autotools
+	 build system, which creates executables in both the liflines
+	 and tools subdirectories.
+
+</para>
+
+</chapter>
+<chapter>
+<title>btree module</title>
+
+<para>
+  The btree subdirectory contains the implementation for a btree
+  database, using fixed length 8 letter keys (RKEY).
+</para>
+
+<formalpara>
+<title>nodes</title>
+<para>
+  Each node in the btree is a separate file on disk (named, eg, "aa"),
+  and the first 4096 (BUFLEN macro) bytes are the node header.
+</para></formalpara>
+
+<formalpara><title>
+
+  index nodes
+
+    </title><para>
+
+  These are the interior index nodes of the btree; they contain pointers
+  to subordinate index or block nodes. The program performs binary
+  searches through index nodes to find a particular key.
+
+    </para></formalpara><formalpara><title>
+
+  block nodes
+
+    </title><para>
+
+  These contain the actual data (keys and their associated records).
+
+    </para></formalpara><formalpara><title>
+
+  keyfile
+
+    </title><para>
+
+  One special file on the disk, the keyfile, contains some meta information
+  and a pointer to the root of the btree (the master key). When the root
+  changes (splits), the master key in the keyfile is updated accordingly.
+
+    </para></formalpara><formalpara><title>
+
+  traverse
+
+    </title><para>
+
+  There is a traversal function implemented at the btree level, which uses
+  a callback.
+
+    </para></formalpara><formalpara><title>
+
+  bterrno
+
+    </title><para>
+
+  There is a global integer error variable, bterrno, which is set by this
+  module upon most failure conditions.
+
+    </para></formalpara><formalpara><title>
+  FUTURE DIRECTIONS
+    </title><para>
+
+  bterrno must be removed for multi-threading. Traversal is more elegantly
+  done via iterator style repeated calls in, instead of callback.
+
+    </para></formalpara>
+
+</chapter>
+
+<chapter>
+<title>stdlib module</title>
+
+<para>
+The stdlib directory contains various utility functions not specifically
+related to <application>LifeLines</application>, GEDCOM, or even genealogy.
+</para>
+
+<sect1>
+<title>String Functions</title>
+
+<para>
+There has built up, over time, quite an assortment of string functions,
+split currently between mystring.c and stdstrng.c (and a few macros in
+standard.h).
+</para>
+
+<sect2>
+<title>String copy and concatenation</title>
+
+<funcsynopsis><funcprototype>
+<funcdef>char *<function>llstrncpy</function></funcdef>
+<paramdef><parameter>char *dest</parameter>,
+<parameter>size_t n</parameter>,
+<parameter>int utf8</parameter>,
+<parameter>const char * fmt</parameter>,
+<parameter>va_list args</parameter></paramdef>
+</funcprototype></funcsynopsis>
+
+<funcsynopsis><funcprototype>
+<funcdef>char *<function>llstrncat</function></funcdef>
+<paramdef><parameter>char *dest</parameter>,
+<parameter>size_t n</parameter>,
+<parameter>int utf8</parameter>,
+<parameter>const char * fmt</parameter>,
+<parameter>va_list args</parameter></paramdef>
+</funcprototype></funcsynopsis>
+<para>
+    These are simple wrappers around the C RTL (run time library) functions.
+    The ANSI versions do not zero-terminate on overflow, which is greatly
+    inconvenient, os the wrapper versions do so. Also, the wrapper versions
+    are UTF-8 aware (they backtrack on overflow, to avoid leaving part of
+    a UTF-8 multibyte sequence at the end).
+</para>
+</sect2>
+
+<sect2>
+<title>String append (llstrapp)</title>
+
+<para>
+<funcsynopsis><funcprototype>
+<funcdef>char *<function>llstrapps</function></funcdef>
+<paramdef><parameter>char *dest</parameter>,
+<parameter>size_t limit</parameter>,
+<parameter>int utf8</parameter>,
+<parameter>const char * src</parameter></paramdef>
+</funcprototype></funcsynopsis>
+
+<funcsynopsis><funcprototype>
+<funcdef>char *<function>llstrappc</function></funcdef>
+<paramdef><parameter>char *dest</parameter>,
+<parameter>size_t limit</parameter>,
+<parameter>char ch</parameter></paramdef>
+</funcprototype></funcsynopsis>
+
+<funcsynopsis><funcprototype>
+<funcdef>char *<function>llstrappc</function></funcdef>
+<paramdef><parameter>char *dest</parameter>,
+<parameter>int limit</parameter>,
+<parameter>int utf8</parameter>,
+<parameter>const char * fmt</parameter></paramdef>
+</funcprototype></funcsynopsis>
+
+<funcsynopsis><funcprototype>
+<funcdef>char *<function>llstrappv</function></funcdef>
+<paramdef><parameter>char *dest</parameter>,
+<parameter>int limit</parameter>,
+<parameter>int utf8</parameter>,
+<parameter>const char * fmt</parameter>,
+<parameter>va_list args</parameter></paramdef>
+</funcprototype></funcsynopsis>
+</para>
+<para>
+    This family of functions is one (thin) layer higher than llstrncpy,
+    providing an interface wherein the caller specified the buffer's start
+    and entire size. That is,
+    <programlisting>
+      llstrncat(buffer, " more stuff", sizeof(buffer)-strlen(buffer));
+    </programlisting>
+    may be replaced by
+    <programlisting>
+      llstrapp(buffer, sizeof(buffer), " more stuff");
+    </programlisting>
+    There are also varargs versions, so that
+    <programlisting>
+      snprintf(buffer+strlen(buffer), sizeof(buffer)-strlen(buffer), ...
+    </programlisting>
+    may be replaced by
+    <programlisting>
+      llstrappf(buffer, sizeof(buffer), ...
+    </programlisting>
+</para>
+</sect2>
+
+<sect2>
+<title>String append (appendstr)</title>
+<para>
+    This is a family of functions similar in purpose to the strapp 
+    family, but which uses an additional level of indirection, advancing
+    pointers and decrementing counts. 
+</para>
+<para>
+      * NOTE: FUTURE DIRECTIONS
+      I put these in, and I would like to take them out, as I find them
+      less intuitive than the strapp family, and more bug-prone. They are
+      slightly faster, but I don't think it is worth it. -Perry. 
+</para>
+</sect2>
+
+<sect2>
+<title>char functions</title>
+<para>
+    There are character classification functions, which have handling
+    particular to Latin-1 and to Finnish (if the Finnish compilation option
+    was set). 
+</para>
+
+<para>
+      * NOTE: FUTURE DIRECTIONS
+      It would be very nice to see wchar-based functions, which handle
+      unicode, replace these, and then we might be able to jettison the
+      Latin-1 and Finnish specific character code.
+</para>
+
+</sect2>
+
+<sect2>
+<title>string allocation functions</title>
+<para>
+    TODO: (strsave, strfree, strupdate, strconcat, free_array_strings)
+</para>
+
+</sect2>
+
+<sect2>
+<title>string conversion functions</title>
+<para>
+    TODO: (isnumeric, lower, upper, capitalize, titlecase)
+</para>
+
+</sect2>
+
+<sect2>
+<title>string equality functions</title>
+<para>
+    TODO: (eqstr, eqstr_ex, nestr, cmpstr)
+</para>
+
+</sect2>
+
+<sect2>
+<title>string comparison functions</title>
+<para>
+    TODO: (cmpstrloc)
+</para>
+</sect2>
+
+<sect2>
+<title>string whitespace functions</title>
+<para>
+    TODO: (trim, striptrail, striplead, allwhite, chomp)
+</para>
+</sect2>
+
+<sect2>
+<title>string UTF-8 functions</title>
+<para>
+    These are the low-level functions used to do UTF-8 mechanics.
+    These should only be called when in a database with internal
+    codeset of UTF-8.
+</para>
+</sect2>
+
+<sect2>
+<title>printpic functions</title>
+<para>
+    These are simple printf style functions, except they only handle
+    string format, and they do handle reordering the inputs. These 
+    are used for strings that are internationalized, so that words
+    or numbers (passed in string format) may be reordered in other
+    languages. Instead of %s escapes, these handle %1, %2, and %3
+    escapes.
+</para>
+
+</sect2>
+</sect1>
+
+<sect1>
+<title>List Module</title>
+
+<para>
+list.c and list.h implement a simple, doubly-linked list type, which
+takes void pointers (VPTR) as elements. The list manages its own nodes
+and memory (struct tag_list and struct tag_lnode), but the for the
+elements, it only frees them if the caller so instructs it (using
+list type LISTDOFREE), and of course this only works if they are
+stdalloc/stdfree heap blocks.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Table Module</title>
+
+<para>
+table.c and table.h implement a fixed size hash tree (with linear buckets).
+As of 2005-01, Perry has been changing the implementation of the table
+type, so it is currently in flux.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Balanced Binary Tree (rbtree) Module</title>
+
+<para>
+rbtree.c and rbtree.h implement a generic red/black balanced binary tree.
+These are not currently used by lifelines, but are planned as a replacement
+for the current fixed-size hash table in table.c.
+</para>
+
+</sect1>
+
+</chapter>
+
+<chapter>
+<title>gedlib module</title>
+<para>
+This directory is a collection of routines for GEDCOM and for its use in
+a <application>LifeLines</application> btree database.
+</para>
+
+<sect1>
+<title>names</title>
+  <para>
+  This module implements indexing names.
+  TODO: Explain soundex indexing.
+</para>
+
+</sect1>
+<sect1>
+<title>refns</title>
+<para>
+  This module implements indexing references (REFNs).
+  TOD: Explain two character index.
+</para>
+
+</sect1>
+<sect1>
+<title>xreffile</title>
+<para>
+  This module stores lists of deleted record numbers for each type.
+  When a record is deleted, its number is added to the appropriate
+  deleted list in xreffile. When a record is added, first the
+  appropriate deleted list in xreffile is checked for a free record
+  number.
+</para>
+
+</sect1>
+<sect1>
+<title>messages</title>
+<para>
+  Traditionally all translatable strings have been stored in this file.
+  This is not necessary with the current gettext scheme, but it would
+  perhaps be helpful if a resource based scheme were adapted in the
+  future.
+</para>
+<para>
+    * FUTURE DIRECTIONS
+    When/If GUI versions are incorporated into the same codebase, how to
+    handle translate strings shared and not shared between versions needs
+    to be worked out.
+</para>
+
+</sect1>
+<sect1>
+<title>translation tables (charmaps.c and translat.c)</title>
+<para>
+  The implementation of codeset translation is stored here (not to be 
+  confused with language translation for the user interface, called
+  localization, and not associated with these files). Both custom
+  translation tables and delegation to the iconv codeset conversion 
+  library are done here.
+</para>
+
+</sect1>
+<sect1>
+<title>indiseq</title>
+<para>
+  The indiseq type is implemented here, a list of records (which no longer
+  need all be persons).
+</para>
+
+</sect1>
+<sect1>
+<title>brwslist</title>
+<para>
+  Named browse lists are implemented here (temporary record lists named by
+  user during this session).
+</para>
+</sect1>
+
+</chapter>
+
+<chapter>
+<title>interp module</title>
+<para>
+The <application>LifeLines</application> reporting language parser and interpreter are stored here.
+A custom lexical analyzer is in lex.c, and a yacc parser generator is
+in yacc.y. 
+</para>
+
+<para>
+The main interpreter is called with a list of files to parse, and some
+options. In actuality, I don't think more than one file is ever passed
+to the main entry point. If no file is passed, the routine will prompt
+(and here is where the user may choose a report from a list). But a
+report may be passed in, if one was specified with commandline argument
+to llines or llexec.
+</para>
+
+<para>
+The report file is parsed, and as it is parsed, any included reports 
+are added to the list to be parsed (unless already on the list,
+so circular references are not a problem).
+</para>
+
+<para>
+require statements are handled at parse time. The handler puts the
+requested version into the file property table (stored inside the
+pointer in the filetab entry for the file; filetab entries are
+indexed by full path of report). Later, just after parse completes
+for that file (in the main parsing loop in the main interpreter 
+function), require conditions are tested in check_rpt_requires(...).
+</para>
+
+<sect1>
+<title>pvalues</title>
+<para>
+  All variable values in report language interpretation are stored in a
+  union type called pvalue.
+</para>
+</sect1>
+
+<sect1>
+<title>symtab</title>
+<para>
+  Symbol tables are a thin wrapper around the table type provided by
+  stdlib, specialized to hold pvalues.
+</para>
+</sect1>
+<sect1>
+<title>date</title>
+<para>
+  A fairly complete GEDCOM date parser is also located here. It actually
+  includes both a date parser, and a date formatter (which generates the
+  thousands of possible <application>LifeLines</application> date formats).
+</para>
+
+<para>
+    * FUTURE DIRECTIONS
+    If a date type were added to the report language, it would be possible
+    to distinguish fully-parsed dates in the report language (so invalid or
+    illegal dates could be flagged and handled separately in a report). The
+    date module already implements a date type internally, and it is
+    exposed to the rest of the program (gdate and gdate_val, which correspond
+    to GEDCOM date types), but not to the report language.
+</para>
+</sect1>
+
+</chapter>
+
+<chapter>
+<title>liflines module</title>
+<para>
+TODO:
+</para>
+</chapter>
+
+<chapter>
+<title>autotools build system</title>
+<para>
+todo
+</para>
+</chapter>
+
+<chapter>
+<title>Building <application>LifeLines</application></title>
+<para>
+This chapter gives an overview of one way you can build 
+<application>LifeLines</application>.  It is not intended to be
+a comprehensive list of all techniques, but rather enough to get you started.
+This section does not assume you are downloading the source tarball
+and building it, Those instructions are in the file INSTALL.
+We are assuming you are checking out the sources from CVS.
+</para>
+<sect1>
+<title>Checking the CVS source out</title>
+<para>
+If you are not a member of the 
+<application>LifeLines</application>
+development project, you can check out sources anonymously.
+In the following assume that CVS stands for
+<programlisting>
+cvs -d:pserver:anonymous@cvs.lifelines.sourceforge.net:/cvsroot/lifelines
+</programlisting>
+If you are a project developer, you will be checking the files out under your 
+user_id.  so CVS will stand for
+<programlisting>
+cvs -d:ext:user_id@cvs.lifelines.sourceforge.net:/cvsroot/lifelines
+</programlisting>
+You will also need to export CVS_RSH
+<programlisting>
+CVS_RSH=ssh
+export CVS_RSH
+</programlisting>
+The first time you check out sources into a build area:
+<programlisting>
+CVS login anonymous
+CVS checkout lifelines
+</programlisting>
+When prompted for a password for anonymous, simply press the Enter key.
+</para>
+<para>
+Once you have checked out the sources, cvs hides information in the CVS
+sub directories about how you accessed sourceforge so the -d option
+isn't needed to be typed in.  After the first checkout, if you want to 
+update your sources, you can just type:
+<programlisting>
+cvs update lifelines
+</programlisting>
+</para>
+<para>
+The cvs login command stashes information in .cvspass for remote repository
+access.  If this is the only remote cvs archive you access, you may be able
+to skip the cvs login command on future access attempts.  If you work on 
+multiple projects you can logout when you are finished with
+<programlisting>
+cvs logout
+</programlisting>
+</para>
+</sect1>
+<sect1>
+<title>automake and autoconf</title>
+<para>
+Many of the files you're used to editing by hand are automatically
+generated by automake and/or autoconf.  These include any file named
+Makefile, Makefile.in, config.h, config.h.in, or configure.
+</para>
+
+<para>
+The proper files to modify by hand are configure.ac (if there's something
+new you need to determine about the host system at configuration time)
+and Makefile.am (if source files are added or removed, targets added,
+or dependencies changed).
+</para>
+
+<para>
+As long as you have autoconf and automake installed on your system, the
+Makefiles generated will be able to regenerate any file dependent on a
+Makefile.am or configure.ac.  To regenerate the build system explicitly
+run the script autogen.sh:
+<programlisting>
+ sh autogen.sh
+</programlisting>
+</para>
+
+<para>
+autogen *must* be run after freshly checking a copy of the
+project out of CVS -- the files generated automatically are no longer
+included in the CVS repository.
+</para>
+
+<sect2>
+<title>Which does what:</title>
+
+<para>
+At development (or package creation) time:
+</para>
+
+<para>
+aclocal: This generates aclocal.m4 from acinclude.m4.
+</para>
+
+<para>
+Please run 'aclocal -I build/autotools -I build/autotools' in order to get all 
+the autoconf, automake and gettext macros into aclocal.m4.
+[ The autogen.sh script has been updated to do this. ]
+</para>
+
+<para>
+autoheader: This generates acconfig.h.
+</para>
+
+<para>
+automake: This generates Makefile.in files from Makefile.am files.
+</para>
+
+<para>
+autoconf: This generates configure from configure.ac.
+</para>
+
+<para>
+On remote machine compiling a source distribution package:
+</para>
+
+<para>
+configure will generate config.h and Makefile files from Makefile.in files.
+</para>
+</sect2>
+</sect1>
+<sect1>
+<title>Building the code on Unix/Linux</title>
+<para>
+There are lots of dependencies required to build
+<application>LifeLines</application>.
+Of course you need a C Compiler and make, but also a number of other tools
+like autoconf, automake, byacc and flex. 
+One way to build the code is to make a subdirectory, lets say called bld
+in your lifelines directory, (where the toplevel Makefile.am is located)
+and then build all the code there.  This keeps the objects and executables
+out of the source directories.  This is the process shown here.
+<programlisting>
+sh autogen.sh
+mkdir bld
+cd bld
+../configure
+make
+</programlisting>
+</para>
+<para>
+This should build 
+<application>LifeLines</application>
+and leave the results in subdirectories of the the directory bld.
+</para>
+</sect1>
+<sect1>
+<title>Generating the source tarball</title>
+<para>
+If you have build the code as described above, you can generate the
+source tarball as follows;
+<programlisting>
+cd bld
+make dist
+</programlisting>
+</para>
+<para>
+While this is a source tarball it does contain a number of generated
+files that make it easier to generate 
+<application>LifeLines</application>
+from the source tarball.
+</para>
+</sect1>
+<sect1>
+<title>Generating the rpm package</title>
+<para>
+The specification file to build a rpm for redhat linux is included in the
+cvs repository.  These notes show how you can use this to build the
+source and binary rpm for redhat linux.
+</para>
+<para>
+These instructions use techniques described by Mike Harris in a note
+entitled "Building RPM packages as a non-root user."  These were found
+at http://www.rpm.org/hintskinks/buildtree.  At that url was also a 
+tarball that included the files README( the note), .rpmrc and .rpmmacros.
+The later two files are installed in your home directory.  These do alter
+the default behavior of rpm for you and are not required to build the rpm,
+however, these instructions will fail.
+</para>
+<para>
+Make sure there is a line of the form
+<programlisting>
+%packager     Joe Blow  &lt;joe@blow.com>
+</programlisting>
+In your ~/.rpmmacros file.  It is used to put the name and email address
+of the individual generating the rpm package into the file.  Be sure to
+use your name and email address.  If there is a "Packager:" entry in the
+lifelines.spec file, make sure it is correct, as it overrides the value
+in your .rpmmacros file.
+</para>
+<para>
+From the lifelines directory (where the toplevel Makefile.am and the bld
+directory are, execute the following commands (with appropriate version
+numbers of course)
+<programlisting>
+mkdir ~/rpmbuild
+mkdir ~/rpmbuild/SRPMS
+mkdir ~/rpmbuild/RPMS
+mkdir ~/rpmbuild/BUILD
+mkdir ~/rpmbuild/tmp
+mkdir ~/rpmbuild/lifelines-3.0.22
+cp bld/lifelines-3.0.22.tar.gz ~/rpmbuild/lifelines-3.0.22.
+cp build/rpm/lifelines.spec ~/rpmbuild/lifelines-3.0.22
+cd ~/rpmbuild/lifeines-3.0.22
+rpmbuild -ba lifelines.spec
+</programlisting>
+The mkdir commands only need to be executed if needed.
+If everything goes ok, this will generate a source and binary rpm.
+</para>
+</sect1>
+<sect1>
+<title>Making a release</title>
+<para>
+To release a new version, run the build/setversions.sh script
+to set the version in the many necessary files.
+Add an entry mentioning the new version in the
+<programlisting>
+  ChangeLog
+</programlisting>
+Tag the cvs source via (for example, for version 3.0.25)
+<programlisting>
+  cvs tag v3_0_25
+</programlisting>
+Finally, Send an announcement to the LINES-L mailing list
+</para>
+</sect1>
+<sect1>
+<title>Putting a release on sourceforge</title>
+<para>
+(Not all developers have the power to create or edit a file release
+on sourceforge, only Project Administrators and File Release Technicians.)
+</para>
+<para>
+The instructions at
+http://sourceforge.net/docman/display_doc.php?docid=6445&amp;group_id=1
+are the ones that Perry followed to make many of the releases.
+</para>
+</sect1>
+
+</chapter>
+</book>

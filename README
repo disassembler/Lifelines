@@ -1,0 +1,25 @@
+LifeLines Source Release, Version 3.0.62
+http://lifelines.sourceforge.net
+-------------------------------------------------------------------------
+
+This is the source distribution of the LifeLines system, a genealogy
+software system.  To build and install LifeLines, please refer to
+the installation instructions located in the INSTALL file.
+
+GUI Versions of LifeLines for Windows and UNIX/GNOME are under
+development.  Visit the LifeLines home page
+(see end of file for URL) for details on how to obtain pre-compiled
+or beta (test) copies of these versions.
+
+The DOS text mode version has been integrated into the primary
+distribution.
+
+The original author of LifeLines is Thomas T. Wetmore IV, who released
+it to the open source community under a MIT-style licence (see LICENCE).
+
+LifeLines is now maintained by the open source community, and is the
+result of much effort by many people.  For a list of contributors, see
+AUTHORS.
+
+Please visit http://lifelines.sourceforge.net to check for updates,
+report bugs, or to contribute to LifeLines.

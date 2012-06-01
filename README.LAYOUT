@@ -1,0 +1,132 @@
+LifeLines Source Release, Version 3.0.54
+http://lifelines.sourceforge.net
+-------------------------------------------------------------------------
+
+This is a brief description of the directory layout.
+
+Source Code Directories
+-----------------------
+
+./build/autotools
+
+    Some of the scripts needed for autotools based development
+    README.DEVELOPERS has some information about autotools
+
+./build/gettext
+
+    m4 macro files needed by gettext (the GNU internationalization package)
+
+./build/gnu
+
+    Unused & empty
+
+./build/msvc6
+
+    Project files for Miscrosoft Visual C++ 6
+
+./build/rpm
+
+    spec file used to create rpm (source & binary) distributions
+    (rpm is RedHat package distribution format)
+
+./intl/
+
+    Local gettext implementation, which substitutes in appropriate language
+    translation strings on the fly.
+
+./m4/
+
+    m4 language macros for the Autoconf/Automake system, mostly
+    for the gettext intl subdirectory.
+    The contents of this directory will be entirely created by 
+    the autotools during development.
+
+./po/
+
+    Translations (gettext message catalogs).
+
+./src/arch/
+
+    Library of replacement functions missing on some platforms.
+
+./src/btree/
+
+    btree (database) implementation, with access functions.
+    Used by the rest of lifelines to access the binary database.
+
+./src/gedlib/
+
+    Implementation of the INDISEQ type.
+    Implementation of NAME & REFN records.
+    Node functions (extracting from & sending to db, and some top-level
+     node conversions, eg indi_to_event).
+    messages (attempt to put together all strings for hopeful localization).
+    miscellaneous other stuff (including initialization code & options).
+
+./src/hdrs/
+
+    Header files.
+    screen.h is curses-specific, and will probably be moved eventually.
+
+./src/hdrs/win32/
+
+    Headers for win32 implementation code.
+
+./src/interp/
+
+    Report generator program interpreter.
+
+./src/liflines/
+
+    The frontend logic and GUI code of the LifeLines application.
+    Code to implement import & export, editing, & merging records.
+    The curses interface is somewhat but not entirely separated 
+    from the application.
+    Curses specific:
+      browse.c lbrowse.c loadsave.c main.c menuitem.c pedigree.c screen.c, show.c tandem.c
+    (Although browse, lbrowse, & menuitem embody the main command handling, and will have to
+    be duplicated in other versions, unlesss they can be reused ?)
+
+./src/stdlib/
+
+    Common data types & functions used by other LifeLines modules,
+    including:
+      lists (in double.c), tables, sequences, string stuff
+    These are all independent of LifeLines or GEDCOM.
+
+./src/tools/
+
+    btedit - edit the binary records in the btree (database) itself
+    dbverify - check a database for errors
+
+./ui/ (IN THE FUTURE)
+
+    Will contain UI-specific code for obtaining input and displaying
+    output
+
+./win32/ (ALMOST OBSOLETE)
+
+    Code from the win32 port, used only when creating win32 target
+
+./win32/hdrs/ (OBSOLETE)
+
+    Headers used in win32 port (before ./hdrs existed)
+
+
+Non-Source Code Directories
+---------------------------
+
+./docs/
+
+    Documentation in various formats, including old quickref, and 
+    the new users guide and report manual (and developers guide).
+
+./reports/
+
+    Lifelines language reports (*.ll)
+
+./tt/
+
+   Translation tables, for character set conversions for users
+   without iconv, or for custom conversions.
+
